@@ -2,7 +2,7 @@
 
 # get_next_line
 
-## Description
+### Description
 
 `get_next_line` is a C function that reads one line at a time from a file descriptor.
 A "line" is defined as a sequence of characters ending with `\n`, or the remaining
