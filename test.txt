@@ -12,7 +12,7 @@ segmentation    fault   core    dumped  goodbye cruel   world
 line before the code mysteriously started working
 
 line after the code mysteriously stopped working again
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa hours spent staring at a pointer that was pointing at nothing and meaning everything
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA hours spent staring at a pointer that was pointing at nothing and meaning everything
 it is not a bug it is an undocumented feature that i put there on purpose trust me
 the tester said 0 errors and i do not trust it
 the cat wins. the cat always wins
@@ -25,4 +25,7 @@ oscar scored 100% in get_next_line
 oscar scored 100% in get_next_line
 
 
-Mashaa
+We In This Beech
+Finna Get Croonk
+Eyebrows On Fleek
+Da Fuq
