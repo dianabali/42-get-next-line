@@ -79,7 +79,7 @@ char	*ft_strjoin(char *s1, const char *s2)
 	// Append s2 to result
 	while (i < len1 + len2)
 	{
-		result[i] = s2[i - len1]; // i + len1 because we want to start from the beginning of s2. You can also do `size_t j = 0` where j is the index of s2
+		result[i] = s2[i - len1]; // i - len1 because we want to start from the beginning of s2. You can also do `size_t j = 0` where j is the index of s2
 		i++;
 	}
 	result[i] = '\0';
