@@ -17,7 +17,7 @@ static char	*extract_line(const char *stash)
 
 	// If we found a newline, we want to include it in the line we return, so we add 1 to the length
 	if (nl)
-		len = (size_t)(nl - stash) + 1;
+		len = (nl - stash) + 1;
 	// If no newline, we want to return the whole stash as the line
 	else
 		len = ft_strlen(stash);
@@ -48,7 +48,7 @@ static char	*trim_stash(char *stash)
 	// stash - the original string, 
 	// (unsigned int)(nl - stash) + 1 - the index of the first character after the newline
 	// ft_strlen(nl + 1) - the length of the remaining string
-	remainder = ft_substr(stash, (unsigned int)(nl - stash) + 1, ft_strlen(nl + 1));
+	remainder = ft_substr(stash, (nl - stash) + 1, ft_strlen(nl + 1));
 	free(stash); // free the old stash since we're replacing it with the remainder
 	return (remainder);
 }
@@ -62,7 +62,7 @@ static char	*trim_stash(char *stash)
 */
 static char	*read_to_stash(int fd, char *stash)
 {
-	char	buf[BUFFER_SIZE + 1]; // temporary buffer we read into, +1 for '\0'
+	char	buf[BUFFER_SIZE + 1]; // temporary buffer that holds the bytes read from the file before appending to stash, +1 for '\0'
 	ssize_t	bytes; // number of bytes read in the last read() call
 
 	// We keep reading until we find a newline in the stash
@@ -83,7 +83,7 @@ static char	*read_to_stash(int fd, char *stash)
 		// If stash is NULL, we create a new string from buf
 		if (!stash)
 		{
-			stash = ft_substr(buf, 0, (size_t)bytes);
+			stash = ft_substr(buf, 0, bytes);
 			if (!stash)
 				return (NULL);
 		}
