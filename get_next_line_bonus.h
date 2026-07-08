@@ -8,6 +8,7 @@
 #  define BUFFER_SIZE 42
 # endif
 
+// Main function
 char	*get_next_line(int fd);
 
 // Utils
