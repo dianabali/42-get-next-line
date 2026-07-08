@@ -63,7 +63,7 @@ static char	*trim_stash(char *stash)
 static char	*read_to_stash(int fd, char *stash)
 {
 	char	buf[BUFFER_SIZE + 1]; // temporary buffer that holds the bytes read from the file before appending to stash, +1 for '\0'
-	ssize_t	bytes; // number of bytes read in the last read() call
+	ssize_t	bytes; // number of bytes read() put into buf
 
 	// We keep reading until we find a newline in the stash
 	while (!ft_strchr(stash, '\n'))
@@ -80,7 +80,9 @@ static char	*read_to_stash(int fd, char *stash)
 		if (bytes == 0)
 			break ;
 		buf[bytes] = '\0';
-		// If stash is NULL, we create a new string from buf
+
+		// If stash is NULL (beginning), we create a new string from buf
+		// "Copy bytes characters from buf, starting at index 0, and store that new string in stash"
 		if (!stash)
 		{
 			stash = ft_substr(buf, 0, bytes);
