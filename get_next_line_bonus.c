@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   get_next_line_bonus.c                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dbali <dbali@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/08 12:01:01 by dbali             #+#    #+#             */
+/*   Updated: 2026/07/09 13:00:39 by dbali            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "get_next_line_bonus.h"
 
 static char	*extract_line(const char *stash)
@@ -9,76 +21,61 @@ static char	*extract_line(const char *stash)
 		return (NULL);
 	nl = ft_strchr(stash, '\n');
 	if (nl)
-		len = (size_t)(nl - stash) + 1;
+		len = (nl - stash) + 1;
 	else
 		len = ft_strlen(stash);
 	return (ft_substr(stash, 0, len));
 }
 
-static char	*trim_stash(char *stash)
+static char	*append_to_stash(char *stash, char *buf, ssize_t bytes)
 {
-	char	*nl;
-	char	*remainder;
+	if (!stash)
+		return (ft_substr(buf, 0, bytes));
+	return (ft_strjoin(stash, buf));
+}
 
-	nl = ft_strchr(stash, '\n');
-	if (!nl)
+static int	read_buffer(int fd, char *buf, char **stash)
+{
+	ssize_t	bytes;
+
+	bytes = read(fd, buf, BUFFER_SIZE);
+	if (bytes < 0)
 	{
-		free(stash);
-		return (NULL);
+		free(*stash);
+		*stash = NULL;
+		return (-1);
 	}
-	remainder = ft_substr(stash, (unsigned int)(nl - stash) + 1,
-			ft_strlen(nl + 1));
-	free(stash);
-	return (remainder);
+	if (bytes == 0)
+		return (0);
+	buf[bytes] = '\0';
+	*stash = append_to_stash(*stash, buf, bytes);
+	if (!*stash)
+		return (-1);
+	return (1);
 }
 
 static char	*read_to_stash(int fd, char *stash)
 {
-	char	buf[BUFFER_SIZE + 1];
-	ssize_t	bytes;
+	char	*buf;
+	int		status;
 
-	while (!ft_strchr(stash, '\n'))
-	{
-		bytes = read(fd, buf, BUFFER_SIZE);
-		if (bytes < 0)
-		{
-			free(stash);
-			return (NULL);
-		}
-		if (bytes == 0)
-			break ;
-		buf[bytes] = '\0';
-		if (!stash)
-		{
-			stash = ft_substr(buf, 0, (size_t)bytes);
-			if (!stash)
-				return (NULL);
-		}
-		else
-		{
-			stash = ft_strjoin(stash, buf);
-			if (!stash)
-				return (NULL);
-		}
-	}
+	buf = malloc(BUFFER_SIZE + 1);
+	if (!buf)
+		return (NULL);
+	status = 1;
+	while (!ft_strchr(stash, '\n') && status > 0)
+		status = read_buffer(fd, buf, &stash);
+	free(buf);
+	if (status == -1)
+		return (NULL);
 	return (stash);
 }
 
-/*
-	get_next_line (bonus):
-
-	Uses a SINGLE static variable — an array of stash pointers indexed by fd.
-	This satisfies both bonus requirements:
-		1. Only one static variable.
-		2. Multiple file descriptors tracked independently and concurrently.
-
-	Each index in stash[] holds the unconsumed leftover for that fd between calls.
-	The array is zero-initialised by C's static storage rules (all NULLs at start).
-*/
 char	*get_next_line(int fd)
 {
 	static char	*stash[1024];
 	char		*line;
+	char		*nl;
 
 	if (fd < 0 || fd >= 1024 || BUFFER_SIZE <= 0)
 		return (NULL);
@@ -86,6 +83,17 @@ char	*get_next_line(int fd)
 	if (!stash[fd])
 		return (NULL);
 	line = extract_line(stash[fd]);
-	stash[fd] = trim_stash(stash[fd]);
+	nl = ft_strchr(stash[fd], '\n');
+	if (!nl)
+	{
+		free(stash[fd]);
+		stash[fd] = NULL;
+	}
+	else
+	{
+		nl = ft_substr(stash[fd], (nl - stash[fd]) + 1, ft_strlen(nl + 1));
+		free(stash[fd]);
+		stash[fd] = nl;
+	}
 	return (line);
 }
