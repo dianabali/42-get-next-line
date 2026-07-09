@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   get_next_line_utils_bonus.c                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dbali <dbali@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/08 13:30:22 by dbali             #+#    #+#             */
+/*   Updated: 2026/07/09 13:00:47 by dbali            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "get_next_line_bonus.h"
 
 size_t	ft_strlen(const char *s)
@@ -27,6 +39,19 @@ char	*ft_strchr(const char *s, int c)
 	return (NULL);
 }
 
+static size_t	copy_str(char *dest, const char *src, size_t start)
+{
+	size_t	i;
+
+	i = 0;
+	while (src[i])
+	{
+		dest[start + i] = src[i];
+		i++;
+	}
+	return (start + i);
+}
+
 char	*ft_strjoin(char *s1, const char *s2)
 {
 	char	*result;
@@ -38,21 +63,10 @@ char	*ft_strjoin(char *s1, const char *s2)
 	len2 = ft_strlen(s2);
 	result = malloc(len1 + len2 + 1);
 	if (!result)
-	{
-		free(s1);
 		return (NULL);
-	}
 	i = 0;
-	while (i < len1)
-	{
-		result[i] = s1[i];
-		i++;
-	}
-	while (i < len1 + len2)
-	{
-		result[i] = s2[i - len1];
-		i++;
-	}
+	i = copy_str(result, s1, 0);
+	i = copy_str(result, s2, i);
 	result[i] = '\0';
 	free(s1);
 	return (result);
@@ -78,7 +92,7 @@ char	*ft_substr(const char *s, unsigned int start, size_t len)
 	while (i < len)
 	{
 		sub[i] = s[start + i];
-		i++;
+		i ++;
 	}
 	sub[i] = '\0';
 	return (sub);
