@@ -159,7 +159,6 @@ valgrind --leak-check=full ./gnl
 
 ### Testers
 - [gnlTester](https://github.com/Tripouille/gnlTester)
-- [gnl-unit-test](https://github.com/harm-smits/gnl-unit-test)
 
 ## Example of how this project works
 File = "hi/nbye"
