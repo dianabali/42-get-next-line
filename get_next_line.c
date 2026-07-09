@@ -1,133 +1,99 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dbali <dbali@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/08 12:01:01 by dbali             #+#    #+#             */
+/*   Updated: 2026/07/09 13:25:17 by dbali            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "get_next_line.h"
 
-/*
-	extract_line
-	Pulls everything up to and including the first '\n' (or the full stash if no '\n' present) as a new string.
-	Parameters:
-		- stash: the current accumulated string for this fd.
-*/
 static char	*extract_line(const char *stash)
 {
-	size_t	len; // length of the line to extract (up to and including '\n')
-	char	*nl; // pointer to the first '\n' in stash
+	size_t	len;
+	char	*nl;
 
 	if (!stash || stash[0] == '\0')
 		return (NULL);
 	nl = ft_strchr(stash, '\n');
-
-	// If we found a newline, we want to include it in the line we return, so we add 1 to the length
 	if (nl)
 		len = (nl - stash) + 1;
-	// If no newline, we want to return the whole stash as the line
 	else
 		len = ft_strlen(stash);
-	return (ft_substr(stash, 0, len)); // Extract the line from the stash
+	return (ft_substr(stash, 0, len));
 }
 
-/*
-	trim_stash
-	Returns everything after the first '\n' in stash, or NULL if there is nothing left.
-	Parameters:
-		- stash: the current accumulated string for this fd.
-*/
-static char	*trim_stash(char *stash)
+static char	*append_to_stash(char *stash, char *buf, ssize_t bytes)
 {
-	char	*nl; // pointer to the first '\n' in stash
-	char	*remainder; // the new stash string that will hold everything after the first '\n'
-
-	nl = ft_strchr(stash, '\n');
-
-	// If there is no newline, it means we've returned the whole stash as the line, so we can free it and return NULL for the new stash
-	if (!nl)
-	{
-		free(stash);
-		return (NULL);
-	}
-
-	// If there is a newline, we want to keep everything after it as the new stash for the next call
-	// stash - the original string, 
-	// (unsigned int)(nl - stash) + 1 - the index of the first character after the newline
-	// ft_strlen(nl + 1) - the length of the remaining string
-	remainder = ft_substr(stash, (nl - stash) + 1, ft_strlen(nl + 1));
-	free(stash); // free the old stash since we're replacing it with the remainder
-	return (remainder);
+	if (!stash)
+		return (ft_substr(buf, 0, bytes));
+	return (ft_strjoin(stash, buf));
 }
 
-/*
-	read_to_stash
-	Keeps reading fd into buf (BUFFER_SIZE bytes at a time) and appending to stash until we see a '\n' or reach EOF.
-	Parameters:
-		- fd: the file descriptor to read from.
-		- stash: the current accumulated string for this fd (can be NULL on first call).
-*/
+static int	read_buffer(int fd, char *buf, char **stash)
+{
+	ssize_t	bytes;
+
+	bytes = read(fd, buf, BUFFER_SIZE);
+	if (bytes < 0)
+	{
+		free(*stash);
+		*stash = NULL;
+		return (-1);
+	}
+	if (bytes == 0)
+		return (0);
+	buf[bytes] = '\0';
+	*stash = append_to_stash(*stash, buf, bytes);
+	if (!*stash)
+		return (-1);
+	return (1);
+}
+
 static char	*read_to_stash(int fd, char *stash)
 {
-	char	buf[BUFFER_SIZE + 1]; // temporary buffer that holds the bytes read from the file before appending to stash, +1 for '\0'
-	ssize_t	bytes; // number of bytes read() put into buf
+	char	*buf;
+	int		status;
 
-	// We keep reading until we find a newline in the stash
-	while (!ft_strchr(stash, '\n'))
-	{
-		// Read up to BUFFER_SIZE bytes from fd into buf
-		bytes = read(fd, buf, BUFFER_SIZE);
-		// If read returns -1, there was an error, so we free the stash and return NULL
-		if (bytes < 0)
-		{
-			free(stash);
-			return (NULL);
-		}
-		// If read returns 0, we've reached EOF, so we break out of the loop (we might still have some data in stash to return)
-		if (bytes == 0)
-			break ;
-		buf[bytes] = '\0';
-
-		// If stash is NULL (beginning), we create a new string from buf
-		// "Copy bytes characters from buf, starting at index 0, and store that new string in stash"
-		if (!stash)
-		{
-			stash = ft_substr(buf, 0, bytes);
-			if (!stash)
-				return (NULL);
-		}
-		// Otherwise, we append buf to the existing stash
-		else
-		{
-			stash = ft_strjoin(stash, buf);
-			if (!stash)
-				return (NULL);
-		}
-	}
+	buf = malloc(BUFFER_SIZE + 1);
+	if (!buf)
+		return (NULL);
+	status = 1;
+	while (!ft_strchr(stash, '\n') && status > 0)
+		status = read_buffer(fd, buf, &stash);
+	free(buf);
+	if (status == -1)
+		return (NULL);
 	return (stash);
 }
 
-/*
-	get_next_line: main function.
-
-	Uses a static array of stash pointers indexed by fd so that up to
-	OPEN_MAX file descriptors can be read concurrently without global vars.
-
-	Algorithm:
-		1. Read chunks of BUFFER_SIZE bytes, accumulating them in stash[fd].
-		2. Stop reading as soon as a '\n' is found in stash (lazy reads).
-		3. Carve the first line (up to and including '\n') out of the stash.
-		4. Store whatever remains after that '\n' back into stash[fd].
-		5. Return the carved line to the caller.
-*/
 char	*get_next_line(int fd)
 {
-	static char	*stash[1024]; // static array to hold the stash for each file descriptor (up to 1024)
-	char		*line; // the line that will be extracted and returned to the caller
+	static char	*stash[1024];
+	char		*line;
+	char		*nl;
 
 	if (fd < 0 || fd >= 1024 || BUFFER_SIZE <= 0)
 		return (NULL);
-	// Read from fd and accumulate in stash[fd] until we find a newline or reach EOF
 	stash[fd] = read_to_stash(fd, stash[fd]);
-	// If read_to_stash returns NULL, it means there was an error or we reached EOF without any data, so we return NULL
 	if (!stash[fd])
 		return (NULL);
-	// Extract the next line from stash[fd]
 	line = extract_line(stash[fd]);
-	// Update stash[fd] to be everything after the extracted line
-	stash[fd] = trim_stash(stash[fd]);
+	nl = ft_strchr(stash[fd], '\n');
+	if (!nl)
+	{
+		free(stash[fd]);
+		stash[fd] = NULL;
+	}
+	else
+	{
+		nl = ft_substr(stash[fd], (nl - stash[fd]) + 1, ft_strlen(nl + 1));
+		free(stash[fd]);
+		stash[fd] = nl;
+	}
 	return (line);
 }
