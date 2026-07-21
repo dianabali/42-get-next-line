@@ -127,7 +127,7 @@ printf "hello\nworld\nno newline" > nonewline.txt
 cc -D BUFFER_SIZE=42 get_next_line.c get_next_line_utils.c main.c -o gnl
 ./gnl  # modify main.c to pass fd=0 instead of open() -> the example below
 ```
-```
+```c
 int main(void)
 {
     int   fd = 0;
@@ -143,12 +143,57 @@ int main(void)
 ```
 
 ## Checking memory leaks
-```
-wsl -u root
-cc -g -D BUFFER_SIZE=42 get_next_line.c get_next_line_utils.c main.c -o gnl
-valgrind --leak-check=full ./gnl
+```bash
+cc -g -D BUFFER_SIZE=42 get_next_line.c get_next_line_utils.c main.c
+valgrind --leak-check=full --show-leak-kinds=all ./a.out
 
 # Correct if you see this: 0 bytes in 0 blocks
+```
+
+## Read from multiple file descriptors
+```c
+#include "get_next_line.h"
+#include <fcntl.h>
+#include <stdio.h>
+
+int main(void)
+{
+    int     fd1 = open("test.txt", O_RDONLY);
+    int     fd2 = open("lorem_ipsum.txt", O_RDONLY);
+    int     fd3 = open("charles.txt", O_RDONLY);
+    char    *line;
+
+    printf("fd1=%d  fd2=%d  fd3=%d\n\n", fd1, fd2, fd3);
+
+    line = get_next_line(fd1);
+    printf("fd1: %s", line);
+    free(line);
+
+    line = get_next_line(fd2);
+    printf("fd2: %s", line);
+    free(line);
+
+    line = get_next_line(fd3);
+    printf("fd3: %s", line);
+    free(line);
+
+    line = get_next_line(fd1);
+    printf("fd1: %s", line);
+    free(line);
+
+    line = get_next_line(fd2);
+    printf("fd2: %s", line);
+    free(line);
+
+    line = get_next_line(fd3);
+    printf("fd3: %s", line);
+    free(line);
+
+    close(fd1);
+    close(fd2);
+    close(fd3);
+    return (0);
+}
 ```
 
 ## Resources
