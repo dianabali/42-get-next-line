@@ -1,7 +1,7 @@
 *This project has been created as part of the 42 curriculum by dbali*
 
 # get_next_line
-main -> gnl
+
 ### Description
 
 `get_next_line` is a C function that reads one line at a time from a file descriptor.
@@ -38,7 +38,11 @@ static char *stash[1024];
 ```
 A normal local variable dies when the function returns. A static local variable persists for the lifetime of the program keeping its value between calls. So when `get_next_line` returns a line to you and then gets called again, stash still holds whatever leftover data was sitting after that line.
 
-The array has 1024 slots because static arrays have a size (OPEN_MAX) that holds one stash per file descriptor.
+The array has 1024 slots because Linux limits each process to 1024 open file descriptors at a time (a limit known as OPEN_MAX).
+
+A file descriptor only exists when the OS has actually assigned it to an open file. If you pass an fd yourself, it will be invalid.
+
+Example: 42 as fd exists only if your program has already called `open()` 40 times without closing anything, since the OS assigns fds sequentially starting from the lowest available number:
 ```
 index 0 → fd 0  (stdin)
 index 1 → fd 1  (stdout)
@@ -48,9 +52,21 @@ index 4 → fd 4  (second file you open)
 ...
 index 1023 → fd 1023 (last possible fd)
 ```
+On Linux you can check your current limit by running this in the terminal:
+```
+ulimit -n
+```
+You can also raise it temporarily:
+```
+ulimit -n 4096  # now the process can open 4096 fds at once
+```
 
-2^10 = 1024
-- stash[3] holds the leftover for fd 3 and so on.
+So, the number 1024 is a limit set by the Linux kernel, not by C itself.
+```
+Linux   → 1024 (most common)
+macOS   → 256 (but can be raised)
+Windows → 512 (different system entirely)
+```
 
 ## Project Content
 - `get_next_line.h` - prototypes of `get_next_line()` and helper functions. 
