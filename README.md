@@ -1,7 +1,7 @@
 *This project has been created as part of the 42 curriculum by dbali*
 
 # get_next_line
-
+main -> gnl
 ### Description
 
 `get_next_line` is a C function that reads one line at a time from a file descriptor.
@@ -39,6 +39,17 @@ static char *stash[1024];
 A normal local variable dies when the function returns. A static local variable persists for the lifetime of the program keeping its value between calls. So when `get_next_line` returns a line to you and then gets called again, stash still holds whatever leftover data was sitting after that line.
 
 The array has 1024 slots because static arrays have a size (OPEN_MAX) that holds one stash per file descriptor.
+```
+index 0 → fd 0  (stdin)
+index 1 → fd 1  (stdout)
+index 2 → fd 2  (stderr)
+index 3 → fd 3  (first file you open)
+index 4 → fd 4  (second file you open)
+...
+index 1023 → fd 1023 (last possible fd)
+```
+
+2^10 = 1024
 - stash[3] holds the leftover for fd 3 and so on.
 
 ## Project Content
